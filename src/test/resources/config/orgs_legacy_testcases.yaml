@@ -1,0 +1,8 @@
+should-return-payload-on-success:
+  mock-db-connection-on-success: "mocks/samplePayload.json"
+  assert-payload: "mocks/Actaul payload.json"
+  
+  
+should-return-error-on-failure:
+  mock-db-connection-on-failure: ""
+  assert-payload: ""

@@ -1,0 +1,12 @@
+should-return-running-on-db-connection:
+  mock-db-connection-based-on-result-variable: "mocks/db-connection-on-success.json"
+  mock-db-error: ""
+  verify-on-error-calls: 0
+  assert-payload-status: "running"
+  
+
+should-return-not-running-on-db-connection-failure:
+  mock-db-connection-based-on-result-variable: ""
+  mock-db-error: "DB:CONNECTIVITY"
+  verify-on-error-calls: 1
+  assert-payload-status: "not-running"

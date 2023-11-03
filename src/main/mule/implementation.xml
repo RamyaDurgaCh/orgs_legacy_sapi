@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="healthCheckFlow" doc:id="180d73a5-6841-4af1-ac4a-ce3b30383460" >
+		<logger level="INFO" doc:name="Logger" doc:id="d1dd172e-8f2d-4cfe-af7a-c44f665cba28" />
+		<try doc:name="Try" doc:id="3b6c170d-4d71-4ad2-b77f-7209ecb7cd40" >
+			<db:select doc:name="getCurrentDate" doc:id="e26038cb-cfdb-433b-9b7a-69176e29068f" config-ref="Database_Config" target="result">
+			<db:sql><![CDATA[SELECT CURRENT_DATE;]]></db:sql>
+		</db:select>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a5798e1c-1883-4e05-bfb1-0c05f1b9fc4f" >
+					<set-variable value='#[[]]' doc:name="result" doc:id="e2128ab4-8c21-44bf-b6d5-fb417aa3a3d9" variableName="result"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="transform to json" doc:id="dcc40583-958b-44c0-8b96-20e7499a1b88" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: if(not isEmpty(vars.result) ) "running" else "not-running",
+  timeStamp: now(),
+  (error: "unable to connect to Database") if(isEmpty(vars.result)) 
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="c8b9e7fa-db40-4517-9d59-374114d2bdf9" />
+	</flow>
+	<flow name="Orgs_flow" doc:id="480571d2-2cf8-4883-a6fc-e250e651683f" >
+		<db:select doc:name="Select" doc:id="9445bb39-398c-49c4-9d51-09e93f765df6" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * from BUSINESSES1 limit :limit offset :offset]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"limit":attributes.queryParams.limit default 100,
+	"offset": attributes.queryParams.offset default 0
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="cf817cac-2477-4e02-93a0-c72c8614143f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	id: payload01.id,
+	OrganizationName: payload01.Organization_Name,
+	Address: payload01.Address,
+	City: payload01.City,
+	State: payload01.State,
+	Country: payload01.Country,
+	Zip: payload01.Zip,
+	PhoneNumber: payload01.PhoneNumber,
+	Revenue: payload01.Revenue,
+	CreatedDate: payload01.Created_Date,
+	Notes: payload01.Notes
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="8f515d63-c17a-4af9-b2ab-96d1e26e1ff5" />
+	</flow>
+</mule>
