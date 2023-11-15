@@ -10,7 +10,7 @@
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:error-response>
         </http:listener>
-        <apikit:router config-ref="orgs-legacy-sapi-config"/>
+        <apikit:router config-ref="orgs-legacy-sapi-config" />
         <error-handler>
             <on-error-propagate type="APIKIT:BAD_REQUEST">
                 <ee:transform doc:name="Transform Message">
@@ -110,7 +110,7 @@ error: error.description
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
             <http:error-response statusCode="#[vars.httpStatus default 500]">
-                <http:body></http:body>
+                <http:body />
                 <http:headers>#[vars.outboundHeaders default {}]</http:headers>
             </http:error-response>
         </http:listener>
@@ -134,7 +134,22 @@ output application/json
         </error-handler>
     </flow>
     <flow name="get:\businesses:orgs-legacy-sapi-config">
-        <flow-ref doc:name="Flow Reference" doc:id="98a58721-b820-4826-bc0e-7284b094bf18" name="Orgs_flow" />
+		<ee:transform doc:name="Transform Message" doc:id="9d1cc911-228d-473f-95e4-2a6b9229c04e">
+			<ee:message>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="params" ><![CDATA[%dw 2.0
+output application/java
+var params = attributes.queryParams
+---
+{
+page: params.page default 1,
+limit: params.limit default 100,
+offset: params.offset default 0
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="98a58721-b820-4826-bc0e-7284b094bf18" name="Orgs_flow" />
     </flow>
     <flow name="get:\health:orgs-legacy-sapi-config">
         <flow-ref doc:name="Flow Reference" doc:id="e424bfcd-e89a-4d0c-989b-7a461059288f" name="healthCheckFlow" />

@@ -6,7 +6,7 @@
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<flow name="healthCheckFlow" doc:id="180d73a5-6841-4af1-ac4a-ce3b30383460" >
-		<logger level="INFO" doc:name="Logger" doc:id="d1dd172e-8f2d-4cfe-af7a-c44f665cba28" />
+		<logger level="INFO" doc:name="Logger" doc:id="d1dd172e-8f2d-4cfe-af7a-c44f665cba28" message="health flow started"/>
 		<try doc:name="Try" doc:id="3b6c170d-4d71-4ad2-b77f-7209ecb7cd40" >
 			<db:select doc:name="getCurrentDate" doc:id="e26038cb-cfdb-433b-9b7a-69176e29068f" config-ref="Database_Config" target="result">
 			<db:sql><![CDATA[SELECT CURRENT_DATE;]]></db:sql>
@@ -29,22 +29,29 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="c8b9e7fa-db40-4517-9d59-374114d2bdf9" />
+		<logger level="INFO" doc:name="Logger" doc:id="c8b9e7fa-db40-4517-9d59-374114d2bdf9" message="health flow ended"/>
 	</flow>
 	<flow name="Orgs_flow" doc:id="480571d2-2cf8-4883-a6fc-e250e651683f" >
+		<logger level="INFO" doc:name="Logger" doc:id="932335d1-960b-4e4f-b605-fd22991d597b" message="start logger of businesses flow"/>
 		<db:select doc:name="Select" doc:id="9445bb39-398c-49c4-9d51-09e93f765df6" config-ref="Database_Config">
-			<db:sql ><![CDATA[SELECT * from BUSINESSES1 limit :limit offset :offset]]></db:sql>
+			<db:sql ><![CDATA[SELECT *, count(*) over() 
+FROM businesses1 offset :offset limit :limit]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
-	"limit":attributes.queryParams.limit default 100,
-	"offset": attributes.queryParams.offset default 0
-}]]]></db:input-parameters>
+	limit: vars.params.limit as Number,
+	offset: (vars.params.limit as Number * (vars.params.page as Number - 1)) + vars.params.offset as Number
+	}]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="Transform Message" doc:id="cf817cac-2477-4e02-93a0-c72c8614143f" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
-payload map ( payload01 , indexOfPayload01 ) -> {
+{
+	totalRecords: payload[0].count,
+	recordsPerPage: vars.params.limit,
+	page: vars.params.page,
+    data: 
+    	payload map ( payload01 , indexOfPayload01 ) -> {
 	id: payload01.id,
 	OrganizationName: payload01.Organization_Name,
 	Address: payload01.Address,
@@ -56,9 +63,15 @@ payload map ( payload01 , indexOfPayload01 ) -> {
 	Revenue: payload01.Revenue,
 	CreatedDate: payload01.Created_Date,
 	Notes: payload01.Notes
-}]]></ee:set-payload>
+}	
+    
+
+}
+
+
+]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="8f515d63-c17a-4af9-b2ab-96d1e26e1ff5" />
+		<logger level="INFO" doc:name="Logger" doc:id="8f515d63-c17a-4af9-b2ab-96d1e26e1ff5" message="end logger"/>
 	</flow>
 </mule>

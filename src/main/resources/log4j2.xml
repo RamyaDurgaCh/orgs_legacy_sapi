@@ -15,6 +15,9 @@
             <SizeBasedTriggeringPolicy size="10 MB"/>
             <DefaultRolloverStrategy max="10"/>
         </RollingFile>
+        <Socket name="socket" host="localhost" port="9003">
+         <PatternLayout pattern="%-5p %d [%t] [processor: %X{processorPath}; event: %X{correlationId}] %c: %m%n"/>
+    </Socket>
     </Appenders>
 
     <Loggers>
@@ -28,6 +31,7 @@
 
         <AsyncRoot level="INFO">
             <AppenderRef ref="file"/>
+            <AppenderRef ref="socket"/>
         </AsyncRoot>
     </Loggers>
 
